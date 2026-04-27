@@ -6,7 +6,28 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
 st.set_page_config(page_title="Q-Learning Maze", layout="centered")
-st.title("🐍 ИИ с графиком обучения")
+
+st.header("🎬 Работа обученного ИИ")
+st.image("12-40-25 (online-video-cutter.com).gif", caption="Агент ищет путь")
+
+st.markdown("""
+### Chikabones:
+**1. Что делает ИИ?**
+Синий шар — это наш агент. Его цель: найти выход **(H)**, собрать золото **(G)** и не попасться монстру **(M)**.
+
+**2. Как он учится?**
+ИИ не знает правил заранее. Он обучается методом проб и ошибок в течение 2000 эпизодов:
+
+* **За каждый шаг:** получает -1 (штраф за время).
+* **За стену:** получает -10 (удар).
+* **За золото:** получает +50 (бонус).
+* **За монстра:** получает -1000 (смерть).
+* **За финиш:** получает +1000 (победа).
+
+**Экшен (Action):** Это выбор направления (Вверх, Вниз, Влево, Вправо).
+""")
+
+st.divider()
 
 MAP = [
     ["#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
@@ -31,10 +52,10 @@ def draw_maze(r, c):
         for ic, col in enumerate(row):
             y = 9 - ir
             if col == "#": ax.add_patch(patches.Rectangle((ic, y), 1, 1, color='black'))
-            elif col == "H": ax.text(ic+0.5, y+0.5, "H", color='red', weight='bold', ha='center', va='center')
+            elif col == "H": ax.text(ic+0.5, y+0.5, "H", color='red', weight='bold', ha='center', va='center', fontsize=15)
             elif col == "G": ax.add_patch(patches.Circle((ic+0.5, y+0.5), 0.2, color='gold'))
-            elif col == "M": ax.text(ic+0.5, y+0.5, "M", color='black', weight='bold', ha='center', va='center')
-    ax.add_patch(patches.Circle((c+0.5, 9-r+0.5), 0.3, color='blue'))
+            elif col == "M": ax.text(ic+0.5, y+0.5, "M", color='black', weight='bold', ha='center', va='center', fontsize=15)
+    ax.add_patch(patches.Circle((c+0.5, 9-r+0.5), 0.3, color='blue', ec='white'))
     return fig
 
 def train():
@@ -66,20 +87,27 @@ def train():
 if st.button("Запустить обучение"):
     rewards = train()
     
-    st.subheader("График прогресса ИИ")
+    st.subheader("📊 График обучения")
     fig_hist, ax_hist = plt.subplots()
-    ax_hist.plot(rewards)
-    ax_hist.set_xlabel("Эпизоды"); ax_hist.set_ylabel("Сумма наград")
+    ax_hist.plot(rewards, color='green')
+    ax_hist.set_xlabel("Попытки"); ax_hist.set_ylabel("Баллы")
     st.pyplot(fig_hist)
+    plt.close(fig_hist)
     
-    st.subheader("Демонстрация")
+    st.subheader("🏁 Финальный проход")
     place = st.empty()
     r, c = 1, 1
-    for _ in range(50):
+    for _ in range(60):
         with place.container():
-            st.pyplot(draw_maze(r, c))
-        if (r, c) == (8, 8): st.success("Победа!"); break
-        if (r, c) == (6, 8): st.error("Поражение!"); break
+            current_fig = draw_maze(r, c)
+            st.pyplot(current_fig)
+            plt.close(current_fig)
+        
+        if (r, c) == (8, 8): 
+            st.success("ИИ дошел до цели (H)!"); break
+        if (r, c) == (6, 8): 
+            st.error("ИИ попал в ловушку (M)!"); break
+            
         a = np.argmax(st.session_state.q_table.get((r, c), np.zeros(4)))
         dr, dc = [(-1,0), (1,0), (0,-1), (0,1)][a]
         r, c = r + dr, c + dc
